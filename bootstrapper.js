@@ -1,28 +1,37 @@
 'use strict';
 
-const fs = require('fs');
-const LMRSlotObject = require './interpreter/LMRSlotObject.js';
-const LMRByteObject = require './interpreter/LMRByteObject.js';
-const LMRSmallInteger = require './interpreter/LMRSmallInteger.js';
+import { readFileSync } from 'fs';
+import LMRSlotObject from './interpreter/LMRSlotObject.js';
+import LMRByteObject from './interpreter/LMRByteObject.js';
+import LMRSmallInteger from './interpreter/LMRSmallInteger.js';
+
+const ObjectTypes = Object.freeze({
+	LMRSlotObject: 1,
+	LMRByteObject: 2,
+	LMRSmallIntegerObject: 3
+})
 
 let Bootstrapper = class {
 	load() {
-		let rawdata = fs.readFileSync('kernel.json');
+		let rawdata = readFileSync('kernel.json');
 		let kernel = JSON.parse(rawdata);
 		this.objects = kernel[1].map(obj => recreate(obj));
 		this.objects.forEach(obj => linkSlots(obj));
-		this.exported = Object.fromEntries(Object.entries(kernel[0]).map( ([name, index]) => [name, this.objects[index]]);
+		this.exported = Object.fromEntries(Object.entries(kernel[0]).map( ([name, index]) => [name, this.objects[index]]));
 		return this.objects;
 	}
 
 	recreate(object) {
-		if (object.type == "LMRSlotObject")
-			return new LMRSlotObject(object);
-		if (object.type == "LMRByteObject")
-			return new LMRByteObject(object);
-		if (object.type == "LMRSmallIntegerObject")
-			return new LMRSmallIntegerObject(object);
-		throw "unknown object type";
+		switch (object.type) {
+			case ObjectTypes.LMRSlotObject:
+				return new LMRSlotObject(object);
+			case ObjectTypes.LMRByteObject:
+				return new LMRByteObject(object);
+			case ObjectTypes.LMRSmallIntegerObject:
+				return new LMRSmallIntegerObject(object);
+			default: 
+				throw "unknown object type";
+		}
 	}
 
 	newSlotObject(object)
@@ -59,5 +68,5 @@ let Bootstrapper = class {
 	}
 }
 
-module.exports = Bootstrapper
+export default Bootstrapper
 

@@ -7,7 +7,8 @@ import LMR from './lmr.js';
 import Bootstrapper from './bootstrapper.js';
 
 
-var bootstrapper = new Bootstrapper().load();
-var lmr = new LMR(bootstrapper);
-var module = lmr.load(process.argv[2]);
-module.main();
+var bootstrapper = new Bootstrapper();
+bootstrapper.loadKernel();
+module = bootstrapper.loadModule(process.argv[2]);
+
+bootstrapper.run(module.main);

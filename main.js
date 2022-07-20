@@ -3,11 +3,11 @@
 if (process.argv.length != 3)
 	throw 'wrong arguments'
 
-LMR    = require './lmr.js';
-Bootstrapper = require './bootstrapper.js';
+import LMR from './lmr.js';
+import Bootstrapper from './bootstrapper.js';
 
 
-bootstrapper = new Bootstrapper().load();
-lmr = new LMR(bootstrapper);
-module = lmr.load(process.argv[2]);
+var bootstrapper = new Bootstrapper().load();
+var lmr = new LMR(bootstrapper);
+var module = lmr.load(process.argv[2]);
 module.main();

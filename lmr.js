@@ -25,7 +25,7 @@ Object.prototype.ifNil = function(closure) { if (this == nil) { return closure()
 
 Object.prototype.ifNotNil = function(closure) { if (this == nil) { return nil } else {return closure(this)} }
 
-
+Object.prototype.new = function() { return new this;}
 
 // add some Smalltalk-ish methods to JS booleans
 
@@ -33,6 +33,19 @@ Boolean.prototype.ifTrue  = function(closure) { if (this == true) { return closu
 Boolean.prototype.ifFalse = function(closure) { if (this == true) { return nil } else { return closure() } }
 Boolean.prototype.ifTrueIfFalse = function(closureTrue, closureFalse) { if (this == true) { return closureTrue() } else {return closureFalse() } }
 
+Boolean.prototype._or  = function (b) { return this || b }
+Boolean.prototype._and = function (b) { return this && b }
+
+// loop helpers
+function whileTrue(condition, block)
+{
+	while(condition()) { block() }
+}
+
+function whileFalse(condition, block)
+{
+	while(!condition()) { block() }
+}
 
 // add some Smalltalk-ish methods to JS numbers
 
@@ -43,5 +56,5 @@ Number.prototype.toByDo = function(limit, increment, closure) {
 	else
 		for (i = this; i >= limit; i=i+increment) { closure(i); }
 	}
-	
-	
+
+

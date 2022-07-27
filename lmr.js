@@ -37,17 +37,35 @@ Boolean.prototype._or  = function (b) { return this || b }
 Boolean.prototype._and = function (b) { return this && b }
 
 // loop helpers
-function whileTrue(condition, block)
-{
+Function.prototype.whileTrue(condition, block) = function () {
 	while(condition()) { block() }
+	return nil;
 }
 
-function whileFalse(condition, block)
-{
+Function.prototype.whileFalse(condition, block) = function () {
 	while(!condition()) { block() }
+	return nil;
 }
 
 // add some Smalltalk-ish methods to JS numbers
+Number.prototype._plus = function(value) { return this + value; }
+Number.prototype._minus = function(value) { return this - value; }
+Number.prototype._times = function(value) { return this * value; }
+Number.prototype._slash = function(value) { return this / value; }
+Number.prototype._modulo = function(value) { return this % value; }
+Number.prototype._integerQuotient = function(value) { return int(this / value); }
+Number.prototype._or = function(value) { return int(this | value); }
+Number.prototype._shiftLeft = function(value) { return this << value; }
+Number.prototype._shiftRight = function(value) { return this >> value; }
+
+Number.prototype._equal = function(value) { return this ==  value; }
+Number.prototype._notEqual = function(value) { return this !=  value; }
+Number.prototype._equalEqual = function(value) { return this ===  value; }
+Number.prototype._lessEqualThan = function(value) { return this <=  value; }
+Number.prototype._lessThan = function(value) { return this <  value; }
+Number.prototype._greaterEqualThan = function(value) { return this >=  value; }
+Number.prototype._greaterThan = function(value) { return this >  value; }
+
 
 Number.prototype.toDo = function(limit, closure) { for (i = this; i <= limit; i++) { closure(i); } }
 Number.prototype.toByDo = function(limit, increment, closure) { 
@@ -55,6 +73,6 @@ Number.prototype.toByDo = function(limit, increment, closure) {
 		for (i = this; i <= limit; i=i+increment) { closure(i); }
 	else
 		for (i = this; i >= limit; i=i+increment) { closure(i); }
-	}
+}
 
 

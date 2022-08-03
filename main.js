@@ -8,7 +8,7 @@ import Bootstrapper from './bootstrapper.js';
 
 
 var bootstrapper = new Bootstrapper();
-bootstrapper.loadKernel();
+bootstrapper.loadKernelFile();
 module = bootstrapper.loadModule(process.argv[2]);
 
 bootstrapper.run(module.main);

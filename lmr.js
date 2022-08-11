@@ -21,15 +21,24 @@ globalThis._cascade = function(receiver, cascadeStatements) { return cascadeStat
 
 globalThis.nil = {}
 
-Object.prototype.ifNil_ = function(closure) { if (this == nil) { return closure() } else { return nil } }
+Object.prototype.ifNil_ = function(closure) { if (this == nil) { return closure() } else { return this } }
 
 Object.prototype.ifNotNil_ = function(closure) { if (this == nil) { return nil } else {return closure(this)} }
+Object.prototype.ifNilIfNotNil_ = function(closureNil, closureNotNil) {
+	if (this == nil) { return closureNil() } else {return closureNotNil(this) } }
+
 
 Object.prototype.isNil = function() { return (this === nil) }
 Object.prototype.notNil = function() { return (!this.isNil()) }
 
+Object.prototype.isCollection = function() { return false; }
+Array.prototype.isCollection  = function() { return true; }
+Map.prototype.isCollection    = function() { return true; }
+
 Object.prototype.initialize = function() { return this;}
+Object.prototype.basicNew = function() { return new this; }
 Object.prototype.new = function() { const obj = new this; obj.initialize(); return obj; }
+Object.prototype.class = function() { return this.constructor; }
 
 
 // add some Smalltalk-ish methods to JS booleans
@@ -38,22 +47,38 @@ Boolean.prototype.ifTrue_  = function(closure) { if (this == true) { return clos
 Boolean.prototype.ifFalse_ = function(closure) { if (this == true) { return nil } else { return closure() } }
 Boolean.prototype.ifTrueIfFalse_ = function(closureTrue, closureFalse) { if (this == true) { return closureTrue() } else {return closureFalse() } }
 
-Boolean.prototype._or  = function (b) { return this || b }
-Boolean.prototype._and = function (b) { return this && b }
+Boolean.prototype.or_  = function (closure) { return this || closure() }
+Boolean.prototype.orNot_  = function (closure) { return this || !closure() }
+Boolean.prototype.and_ = function (closure) { return this && closure() }
+Boolean.prototype.andNot_ = function (closure) { return this && !closure() }
+Boolean.prototype.not = function () { return !this }
 
 Array.new_ = function(size) { return new Array(size); }
 Array.newWithAll_ = function(size, value) { return Array(size).fill(value); }
+Array.withWith_ = function(first, second) { return [first, second]; }
 Array.prototype.size  = function()         { return this.length; }
 Array.prototype.isEmpty  = function()         { return this.length == 0; }
+Array.prototype.asArray  = function()         { return this; }
 Array.prototype.at_    = function(index)         { return this[index-1]; }
 Array.prototype.atPut_ = function(index, object) { return this[index-1] = object; }
+Array.prototype.atAllPut_ = function(value) { return this.fill(value); }
 Array.prototype.allButLast = function() { return this.slice(0,-1); }
+Array.prototype.first    = function()         { return this[0]; }
+Array.prototype.second   = function()         { return this[1]; }
+Array.prototype.last     = function()         { return this[this.length-1]; }
 Array.prototype.asString = function() { return String.fromCharCode.apply(null, this); }
 Array.prototype.do_ = function(closure) {
-	this.forEach((value) => closure(value));
+	this.forEach(closure);
+}
+Array.prototype.withIndexDo_ = function(closure) {
+	this.forEach(closure);
 }
 
 
+String.prototype.asSymbol = function() { return this; }
+
+
+Array.prototype.add_ = function(object) { return this.push(object); }
 Array.prototype._comma = function(array) { return this.concat(array); }
 Array.prototype._equal = function(value) { 
 	return Array.isArray(value) &&
@@ -78,9 +103,15 @@ Map.prototype.atIfPresent_ = function(key, closure) {
 		return nil;
 }
 
-//Map.prototype.atIfAbsentPut = function(key, closure) {
-//	return this[key] ?? (this[key] = closure());
-//}
+Map.prototype.atIfAbsentPut_ = function(key, closure) {
+	let v = this.get(key);
+	if (v)
+		return v;
+	else 
+		v = closure();
+		this.set(key, v);
+	return v;
+}
 
 Map.prototype.removeKeyIfAbsent_ = function(key, closure) {
 	if (!this.delete(key)) { closure();}
@@ -89,7 +120,32 @@ Map.prototype.removeKeyIfAbsent_ = function(key, closure) {
 Map.prototype.keysAndValuesDo_ = function(closure) {
 	this.forEach((value, key) => closure(key, value));
 }
+
+// ~~~~~~~~~~~~~~~~~~~~ Block Closures ~~~~~~~~~~~~~~~~~~~~~~~~
+
+Function.prototype.value = function () {
+	return this();
+}
+
+Function.prototype.value_ = function (a) {
+	return this(a);
+}
+
+Function.prototype.valueValue_ = function (a, b) {
+	return this(a, b);
+}
+
 // loop helpers
+Function.prototype.whileTrue = function () {
+	while(this()) { }
+	return nil;
+}
+
+Function.prototype.whileFalse = function () {
+	while(!this()) { }
+	return nil;
+}
+
 Function.prototype.whileTrue_ = function (block) {
 	while(this()) { block() }
 	return nil;
@@ -128,8 +184,12 @@ Number.prototype._modulo = function(value) { return this % value; }
 Number.prototype._integerQuotient = function(value) { return Math.floor(this / value); }
 Number.prototype._and = function(value) { return this & value; }
 Number.prototype._or = function(value) { return this | value; }
+Number.prototype.bitAnd_ = function(value) { return this & value; }
+Number.prototype.bitOr_ = function(value) { return this | value; }
 Number.prototype._shiftLeft = function(value) { return this << value; }
 Number.prototype._shiftRight = function(value) { return this >> value; }
+Number.prototype.anyMask_ = function(value) { return (this & value) != 0; }
+Number.prototype.noMask_ = function(value) { return (this & value) == 0; }
 
 
 Number.prototype.timesRepeat_ = function(closure) { for (let i = 0; i < this; i++) { closure(); } }
@@ -144,10 +204,15 @@ Number.prototype.toByDo_ = function(limit, increment, closure) {
 
 import LMRByteObject from "./interpreter/LMRByteObject.js";
 import LMRSlotObject from "./interpreter/LMRSlotObject.js";
+import LMRHeapObject from "./interpreter/LMRHeapObject.js";
+import LMRSmallInteger from "./interpreter/LMRSmallInteger.js";
 
 LMRSlotObject.prototype.pointersSize = function() { return this.size(); }
 LMRSlotObject.prototype.size = function() { return this._slots.length; }
 LMRByteObject.prototype.size = function() { return this._bytes.length; }
+
+
+// ~~~~~~~~~~~~~~~~~~~~ Stretch ~~~~~~~~~~~~~~~~~~~~~~~~
 
 let Stretch = class {
 	constructor(start, end) {this.start = start; this.end = end;};
@@ -174,3 +239,148 @@ Number.prototype.bitsClear_ = function(stretch, value) {
 	let mask = (1 << stretch.end) - (1 << (stretch.start - 1));
 	return this & (mask ^ -1)
 }
+
+// ~~~~~~~~~~~~~~~~~~~~ Interval ~~~~~~~~~~~~~~~~~~~~~~~~
+
+let Interval = class {
+	constructor(start, end, step = 1) {this.start = start; this.end = end; this.step = 1};
+
+	at_(anInteger) {
+		if (anInteger > 0) {
+			const result = this.start + (anInteger - 1 * this.step);
+			const min = Math.min(this.start, this.end);
+			const max = Math.max(this.start, this.end);
+			if (min <= result && result <= max) return result;
+			if (anInteger == this.size() ) return this.end;
+		}
+		
+		throw "outOfBoundsIndex";
+	}
+
+	collect_(closure) {
+		const result = [];
+		const s = this.size();
+		for (let i = 1; i <= s; i++)
+		{
+			result.push(closure(this.at_(i)));
+		}
+		return result;
+	}
+
+	size() {
+		let _size = Math.max(0, Math.floor((this.end - this.start) / this.step) + 1);
+		const x = this.step * _size + this.start;
+		if ((this.step < 0 && this.end <= x) || (this.step > 0 && x <= this.end))
+			_size = _size + 1;
+		return _size;
+	}
+}
+
+Number.prototype.to_ = function(value) { return new Interval(this, value); }
+
+// ~~~~~~~~~~~~~~~~~~~~ ReadStream ~~~~~~~~~~~~~~~~~~~~~~~~
+
+let ReadStream = class {
+	constructor(contents) { this.contents = contents; this.position = 0; }
+
+	next() {
+		if (this.atEnd())
+			throw "reached the end of the stream"; 
+		
+		return this.contents[this.position++];
+	}
+
+	next_(n) {
+		if (this.position + n > this.contents.length)
+			throw "reached the end of the stream"; 
+		
+		const start = this.position;
+		this.position =  this.position+n;
+		return this.contents.slice(start,  this.position);
+	}
+
+	peek() {
+		if (this.atEnd())
+			return nil;
+		
+		return this.contents[ this.position];
+	}
+
+	int64() {
+		// integers are stored as big endian
+		const start =  this.position;
+		this.position = this.position + 8;
+		return this.contents[start+7] +
+		(this.contents[start+6] << 8) +
+		(this.contents[start+5] << 16) +
+		(this.contents[start+4] << 24) +
+		(this.contents[start+3] << 32) +
+		(this.contents[start+2] << 40) +
+		(this.contents[start+1] << 48) +
+		(this.contents[start+0] << 56);
+	}
+
+	atEnd() {
+		return this.position >= this.contents.length;
+	}
+}
+
+Array.prototype.readStream = function() { return new ReadStream(this); }
+
+// extra for debugging
+Object.prototype.ASSERT_ = function (bool) { if (!bool) debugger; }
+
+LMRSmallInteger.prototype.toString = function () { return "<" + this._value + ">"; }
+LMRHeapObject.prototype.toString = function () { return "a " + this.classname(); }
+LMRSlotObject.prototype.toString = function () { 
+	if (this === nil)
+		return "nil";
+
+	const classname = this.classname();
+
+	if (classname == "CompiledMethod") {
+		let klass = this.slotAt_(4);
+		if (!klass) klass = nil;
+		let selector = this.slotAt_(5);
+		if (!selector) selector = nil;
+	
+		return klass.toString() + ">>" + selector.toString();
+	}
+	const species = this.species();
+	if (!species.speciesIsClass()) // species is metaclass, then this is a class
+		return this.className().asLocalString();
+
+	if (classname=="Metaclass") // species is class,then this is a metaclass
+		return this.speciesClassname();
+
+	return "a " + this.classname();;
+}
+
+LMRByteObject.prototype.toString = function () { 
+
+	const classname = this.classname();
+
+	if (classname == "Symbol")
+		return "#" + this.asLocalString();
+	
+	if (classname == "String")
+		return '"' + this.asLocalString() + '"';
+	
+	return "a " + this.classname();;
+}
+
+LMRHeapObject.prototype.species = function () { return this._header._behavior._slots[0]; }
+LMRHeapObject.prototype.speciesIsClass = function () { return this._slots[5].constructor == LMRByteObject; }
+LMRHeapObject.prototype.speciesInstanceClass = function () { 
+	return this.speciesIsClass() ? this : this._slots[5];
+}
+LMRHeapObject.prototype.className = function () { return this._slots[5]; }
+
+LMRHeapObject.prototype.classname = function () { return this.species().speciesClassname() }
+LMRHeapObject.prototype.speciesClassname = function () { 
+	if (this.speciesIsClass())
+		return this.className().asLocalString();
+	else 
+		return this.speciesInstanceClass().className().asLocalString() + " class";
+}
+

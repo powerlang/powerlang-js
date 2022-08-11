@@ -11,7 +11,7 @@ let Bootstrapper = class {
 	constructor()
 	{
 		this.modules = new Map;
-		this.runtime = new PowertalkLMR();
+		this.runtime = PowertalkLMR.new();
 	}
 
 	loadKernelFile(kernelPath = 'Kernel.json')
@@ -92,7 +92,8 @@ let Bootstrapper = class {
 			_dictionaryTableIndex: 2,
 			_classClassVariablesIndex: 8,
 			_metaclassInstanceClassIndex: 6,
-			_classModuleIndex: 10,
+			_classNamespacesIndex: 8,
+			_classModuleIndex: 9,
 			_moduleNamespaceIndex: 4,
 			_closureBlockIndex: 1,
 			_blockMethodIndex: 3

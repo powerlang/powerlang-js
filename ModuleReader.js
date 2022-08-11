@@ -100,7 +100,7 @@ const ModuleReader = class {
 		if (object.isImmediate())
 			return;
 		
-		object._header.behavior = this.objects[object._header._behavior];
+		object._header._behavior = this.objects[object._header._behavior];
 		
 		if (!object.isBytes())
 			object._slots = object._slots.map(index => this.objects[index]);

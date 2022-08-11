@@ -71,7 +71,7 @@ Array.prototype.do_ = function(closure) {
 	this.forEach(closure);
 }
 Array.prototype.withIndexDo_ = function(closure) {
-	this.forEach(closure);
+	this.forEach((element, index) => {closure(element, index + 1)} );
 }
 
 
@@ -257,6 +257,14 @@ let Interval = class {
 		throw "outOfBoundsIndex";
 	}
 
+	do_(closure) {
+		if (this.step > 0) {
+			for (let i = this.start; i <= this.end; i=i+this.step) { closure(i) }
+		} else {
+			for (let i = this.start; i >= this.end; i=i+this.step) { closure(i) }
+		}	
+	}
+
 	collect_(closure) {
 		const result = [];
 		const s = this.size();
@@ -277,6 +285,7 @@ let Interval = class {
 }
 
 Number.prototype.to_ = function(value) { return new Interval(this, value); }
+Number.prototype.toBy_ = function(limit, increment) { return new Interval(this, limit, increment); }
 
 // ~~~~~~~~~~~~~~~~~~~~ ReadStream ~~~~~~~~~~~~~~~~~~~~~~~~
 

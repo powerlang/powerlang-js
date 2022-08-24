@@ -31,6 +31,13 @@ Object.prototype.ifNilIfNotNil_ = function(closureNil, closureNotNil) {
 Object.prototype.isNil = function() { return (this === nil) }
 Object.prototype.notNil = function() { return (!this.isNil()) }
 
+Object.prototype.value = function () { return this; }
+
+Object.prototype.eval_ = function(string) {
+	 return eval(string) }
+
+Object.prototype.isSmallInteger = function(value) { return Number.isInteger(value); }
+
 Object.prototype.isCollection = function() { return false; }
 Array.prototype.isCollection  = function() { return true; }
 Map.prototype.isCollection    = function() { return true; }
@@ -72,6 +79,12 @@ Array.prototype.do_ = function(closure) {
 }
 Array.prototype.withIndexDo_ = function(closure) {
 	this.forEach((element, index) => {closure(element, index + 1)} );
+}
+Array.prototype.doSeparatedBy_ = function(closure, separated) {
+	this.forEach((value, index) => { 
+		closure(value); 
+		if (!Object.is(this.length - 1, index)) {separated()}
+	});
 }
 
 
@@ -135,6 +148,10 @@ Function.prototype.valueValue_ = function (a, b) {
 	return this(a, b);
 }
 
+Function.prototype.valueValueValue_ = function (a, b, c) {
+	return this(a, b, c);
+}
+
 // loop helpers
 Function.prototype.whileTrue = function () {
 	while(this()) { }
@@ -191,7 +208,6 @@ Number.prototype._shiftRight = function(value) { return this >> value; }
 Number.prototype.anyMask_ = function(value) { return (this & value) != 0; }
 Number.prototype.noMask_ = function(value) { return (this & value) == 0; }
 
-
 Number.prototype.timesRepeat_ = function(closure) { for (let i = 0; i < this; i++) { closure(); } }
 Number.prototype.toDo_ = function(limit, closure) { for (let i = this; i <= limit; i++) { closure(i); } }
 Number.prototype.toByDo_ = function(limit, increment, closure) { 
@@ -229,7 +245,7 @@ Number.prototype.bitsAt_ = function(stretch) {
 
 Number.prototype.bitsAtPut_ = function(stretch, value) {
 	let shifted = this >> (stretch.start - 1);
-	let mask = 1 << stretch.length();
+	let max = 1 << stretch.length();
 	if (value >= max)
 		{ throw 'invalid argument'; };
 	return this.bitsClear_(stretch) | shifted;
@@ -336,8 +352,31 @@ let ReadStream = class {
 
 Array.prototype.readStream = function() { return new ReadStream(this); }
 
-// extra for debugging
+// ~~~~~~~~~~~~~~~~~~~~ WriteStream ~~~~~~~~~~~~~~~~~~~~~~~~
+
+let WriteStream = class {
+	constructor() { this.collection = ""; }
+	nextPut_(character) {this.collection = this.collection + character; return this;}
+	nextPutAll_(string) {this.collection = this.collection + string; return this;}
+	cr() {return this.nextPutAll_("\n");}
+	crtab() {return this.nextPutAll_("\n\t");}
+	crtab_(n) {
+		this.nextPutAll_("\n" + "\t".repeat(n));
+	}
+	
+	contents() { return this.collection;}
+	reset() { this.collection = ""; return this;}
+	print_(object) {return this.nextPutAll_(object.toString());}
+}
+
+String.prototype.writeStream = function() { return new WriteStream(); }
+
+
+
+// ~~~~~~~~~~~~~~ extra for debugging ~~~~~~~~~~~~~~~~~
+
 Object.prototype.ASSERT_ = function (bool) { if (!bool) debugger; }
+Object.prototype.halt = function () { debugger; }
 
 LMRSmallInteger.prototype.toString = function () { return "<" + this._value + ">"; }
 LMRHeapObject.prototype.toString = function () { return "a " + this.classname(); }

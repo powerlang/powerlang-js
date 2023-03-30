@@ -1,31 +1,71 @@
-# js-smalltalk-vm
-A Smalltalk VM that runs on top of JavaScript
+# powerlang.js - A Smalltalk VM that runs on top of JavaScript
 
-# This readme is strongly WIP
+In a nutshell, with this repo you get a bunch of js files that allow how to load an image file in a JSON format and execute Smalltalk code by evaluating Bee ~~bytecodes~~ treecodes.
 
-# System overview
+# Getting Started
 
-The code in this repo is part of a Smalltalk System designed to run on top of JavaScript.
-We include here the tools to plug a JavaScript version of the Powerlang Smalltalk Interpreter
-with a Smalltalk image, and to let them run together.
+    # fetch the code, generate interpreter and image, fetch js dependencies
+    git clone git@github.com:melkyades/powerlang-js.git
+    make all
+    npm install
 
-The VM is based on the Powerlang Smalltalk Interpreter. To be able to use the interpreter from
-JavaScript, we need to rewrite it to JavaScript. Instead of doing that, Powerlang provides a 
-JavaScript transpiler, which takes the interpreter code (written in Smalltalk), generates JS code,
-and writes it into `interpreter` folder.
+## Evaluating Smalltalk code using nodejs
+    $ node cli.js --eval "1 tinyBenchmarks"
 
+## Opening a Smalltalk REPL
+    $ node repl.js
+    Welcome to powerlang.js!
+    [1] > 3 + 4
+    7
+    [2] > q
+    See you soon!
+    $
 
-With the transpiled interpreter, and the glue code provided in this repo, we can load a Smalltalk
-kernel with a bunch of Smalltalk objects reified in JS and run code. 
-To generate the kernel, we again rely in Powerlang. We first execute the Powerlang bootstrap process
-to create an initial Powertalk kernel module. We then load an image segmement writer that outputs the
-kernel objects in a JSON format, which this repo can load and plug into the VM.
+## Using Smalltalk as a library from nodejs
 
-With the VM and the image, it's just a matter of running `nodejs main.js`
+    # bench.js
+    import powerlang from 'powerlang.js';
+    import { performance } from "perf_hooks";
+    let runtime = powerlang.launch();
+    var startTime = performance.now();
+    const result =  runtime.sendLocalTo_("bytecodeIntensiveBenchmark", number);
+    var endTime = performance.now();
+    console.log(`bytecodeIntensiveBenchmark returned ${result.value()} and took ${endTime - startTime} milliseconds`)
 
-# Creating an image
+    # run bench.js
+    $ node bench.js
+    bytecodeIntensiveBenchmark returned 1028 and took 3233.994176030159 milliseconds
 
-*WIP* In order to run your Smalltalk image in the browser, you have to convert it to a format compatible
-with this VM. 
+## Using Smalltalk as a library in a web page
+
+    # bench.html
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <script src="https://cdn.jsdelivr.net/npm/powerlang/dist/powerlang.js">
+        <script>
+          const runtime = powerlang.launch();
+          const result = powerlang.evalExpression("(3 + 4) printString");
+          document.body.appendChild(result.toLocalString());
+        </script>
+        <title>powerlang.js in action</title>
+      </head>
+      <body>
+      </body>
+    </html>
+
+# System overview - A.K.A. how powerlang.js works
+
+To run Smalltalk code you need a Smalltalk image and a Smalltalk evaluator (usually an interpreter).
+To run it on top of JavaScript the interpreter needs to be made of JavaScript code.
+
+Instead of writing the evaluator directly in JavaScript, in powerlang.js we take Powerlang evaluator, written in Smalltalk, and transpile its sources to JavaScript.
+
+For the Smalltalk image, we use Powerlang to bootstrap a virtual Smalltalk kernel image from sources, and then make that kernel write an image file tailored for the web, in JSON format.
+
+Both the json image and js interpreter are generated using the `Makefile`. The image will be created in `image-segments` folder and the interpreter is written in `interpreter` folder.
+
+Additionally, the repo contains some glue JS code to support the evaluator, debugging and launching the image.
+
 
 

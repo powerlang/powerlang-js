@@ -25,7 +25,7 @@ Until we have a CI set in place, you have to clone this repo and build the whole
 2 - load the Powerlang-JS package using Iceberg (the repo should already be configured and show up as '.').
 
 3 - execute `JSTranspiler transpilePowerlangInterpreter` to generate the js files of the interpreter
-4 - debug the test `PowerlangJSTest>>#test010WriteKernelAsJSON`, and when it halts, manually inspect the generated json file and save it as `powerlang-js/kernel.json`.
+4 - debug the test `PowerlangJSTest>>#test010WriteKernelAsJSON`, and when it halts, manually evaluate in the debugger: `'../kernel.json' asFileReference writeStreamDo: [ :s | s nextPutAll: result asLocalString ]`.
 
 ## Evaluating Smalltalk code using nodejs
     $ node cli.js --eval "1 tinyBenchmarks"

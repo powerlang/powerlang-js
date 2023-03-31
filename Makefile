@@ -5,12 +5,16 @@ all: interpreter kernel
 powerlang/bootstrap.image: powerlang
 	make -C powerlang bootstrap.image
 
+powerlang/specs/current: powerlang
+	make -C powerlang specs/current
+
+
 powerlang:
 	git clone git@github.com:powerlang/powerlang.git
 
 kernel: image-segments/kernel.json
 
-interpreter/PowertalkEvaluator.js: powerlang/bootstrap.image
+interpreter/PowertalkEvaluator.js: powerlang/bootstrap.image powerlang/specs/current
 	make -C powerlang powerlangjs
 
 interpreter: interpreter/PowertalkEvaluator.js

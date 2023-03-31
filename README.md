@@ -4,10 +4,28 @@ In a nutshell, with this repo you get a bunch of js files that allow how to load
 
 # Getting Started
 
+Until we have a CI set in place, you have to clone this repo and build the whole thing.
+  
+## Building
+
+  
+
     # fetch the code, generate interpreter and image, fetch js dependencies
     git clone git@github.com:melkyades/powerlang-js.git
+    cd powerlang-js
     make all
     npm install
+
+**NOTE:** The makefile is not complete yet, so make step fails. After make ends (with error), you need to do the following manually in Pharo:
+
+1 - open the generated bootstrap image with:
+     cd powerlang
+     ./pharo-ui bootstrap.image
+
+2 - load the Powerlang-JS package using Iceberg (the repo should already be configured and show up as '.').
+
+3 - execute `JSTranspiler transpilePowerlangInterpreter` to generate the js files of the interpreter
+4 - debug the test `PowerlangJSTest>>#test010WriteKernelAsJSON`, and when it halts, manually inspect the generated json file and save it as `powerlang-js/kernel.json`.
 
 ## Evaluating Smalltalk code using nodejs
     $ node cli.js --eval "1 tinyBenchmarks"

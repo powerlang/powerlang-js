@@ -13,7 +13,7 @@ BaselineOfPowerlangJS >> baseline: spec [
 			spec repository: 'github://powerlang/ocompiler:main'
 		].
 
-		spec package: 'PowerlangJS' with:[
+		spec package: 'PowerlangJS-Core' with:[
 			spec requires: 'OCompiler'.
 		].
 		spec package: 'PowerlangJS-Tests'.

@@ -32,7 +32,7 @@ Class {
 		'andNot',
 		'orNot'
 	],
-	#category : #'Powerlang-JS'
+	#category : #'PowerlangJS-Core'
 }
 
 { #category : #'as yet unclassified' }

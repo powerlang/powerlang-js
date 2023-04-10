@@ -1,7 +1,7 @@
 Class {
 	#name : #PowertalkNativeJSEvaluator,
 	#superclass : #PowertalkEvaluator,
-	#category : #'Powerlang-JS'
+	#category : #'PowerlangJS-Core'
 }
 
 { #category : #private }

@@ -9,7 +9,7 @@ Class {
 		'imports',
 		'classMethod'
 	],
-	#category : #'Powerlang-JS'
+	#category : #'PowerlangJS-Core'
 }
 
 { #category : #visiting }

@@ -5,7 +5,7 @@ Class {
 		'code',
 		'literals'
 	],
-	#category : #'Powerlang-JS'
+	#category : #'PowerlangJS-Core'
 }
 
 { #category : #accessing }

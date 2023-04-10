@@ -1,6 +1,6 @@
 Extension { #name : #LMRSlotObject }
 
-{ #category : #'*Powerlang-JS' }
+{ #category : #'*PowerlangJS-Core' }
 LMRSlotObject >> classInstSize [
 	"assuming this is a behavior object (on the js world we are not creating LMRBehavioObject instances anymore)"
 

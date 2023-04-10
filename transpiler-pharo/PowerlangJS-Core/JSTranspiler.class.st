@@ -4,7 +4,7 @@ Class {
 	#instVars : [
 		'transpilers'
 	],
-	#category : #'Powerlang-JS'
+	#category : #'PowerlangJS-Core'
 }
 
 { #category : #'as yet unclassified' }

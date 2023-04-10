@@ -1,13 +1,13 @@
 Extension { #name : #ZnCharacterWriteStream }
 
-{ #category : #'*Powerlang-JS' }
+{ #category : #'*PowerlangJS-Core' }
 ZnCharacterWriteStream >> crtab: anInteger [
 	self
 		cr;
 		tab: anInteger
 ]
 
-{ #category : #'*Powerlang-JS' }
+{ #category : #'*PowerlangJS-Core' }
 ZnCharacterWriteStream >> tab: anInteger [
 	anInteger timesRepeat: [ self tab]
 ]

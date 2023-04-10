@@ -13,14 +13,16 @@ BaselineOfPowerlangJS >> baseline: spec [
 			spec repository: 'github://powerlang/ocompiler:main'
 		].
 
-		spec package: 'Powerlang-JS' with:[
+		spec package: 'PowerlangJS' with:[
 			spec requires: 'OCompiler'.
 		].
-		spec package: 'Powerlang-JS-Tests'.
+		spec package: 'PowerlangJS-Tests'.
+		spec package: 'PowerlangJS-TestsFailing'.
 
 		"base group: just core boostrapping code and tests"
-		spec group: 'base' with: #('Powerlang-JS-Core'
-		                           'Powerlang-JS-Tests').
+		spec group: 'base' with: #('PowerlangJS-Core'
+		                           'PowerlangJS-Tests'
+		                           'PowerlangJS-TestsFailing').
 
 		"default group: loaded when group is not specified"
 		spec group: 'default' with: #('base')

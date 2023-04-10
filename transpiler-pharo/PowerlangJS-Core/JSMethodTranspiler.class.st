@@ -377,45 +377,43 @@ JSMethodTranspiler >> visitMethodNode: anRBMethodNode [
 	| signature nonlocal temps statements |
 	signature := self methodSignatureFrom: anRBMethodNode.
 	stream tab: 1.
-	classMethod
-		ifTrue: [ stream nextPutAll: 'static ' ].
+	classMethod ifTrue: [ stream nextPutAll: 'static ' ].
 	stream
 		nextPutAll: signature;
 		nextPutAll: ' {';
 		crtab: tabs.
 	temps := anRBMethodNode temporaries.
-	temps isEmpty
-		ifFalse: [ stream nextPutAll: 'let '.
-			temps
-				do: [ :t | stream nextPutAll: (self translateIdentifier: t name) ]
-				separatedBy: [ stream nextPutAll: ', ' ].
-			stream
-				nextPut: $;;
-				crtab: tabs ].
+	temps isEmpty ifFalse: [ 
+		stream nextPutAll: 'let '.
+		temps
+			do: [ :t | stream nextPutAll: (self translateIdentifier: t name) ]
+			separatedBy: [ stream nextPutAll: ', ' ].
+		stream
+			nextPut: $;;
+			crtab: tabs ].
 	nonlocal := self methodHasNonLocal: anRBMethodNode.
-	nonlocal
-		ifTrue: [ stream
-				nextPutAll: 'const _home =  {};';
-				crtab: tabs;
-				nextPutAll: 'try {'.
-			tabs := tabs + 1.
-			stream crtab: tabs ].
+	nonlocal ifTrue: [ 
+		stream
+			nextPutAll: 'const _home =  {};';
+			crtab: tabs;
+			nextPutAll: 'try {'.
+		tabs := tabs + 1.
+		stream crtab: tabs ].
 	statements := anRBMethodNode statements.
 	statements
 		do: [ :s | 
 			s acceptVisitor: self.
 			stream nextPut: $; ]
 		separatedBy: [ stream crtab: tabs ].
-	statements isEmpty
-		ifFalse: [ statements last isReturn
-				ifFalse: [ stream
-						crtab: tabs;
-						nextPutAll: 'return this;' ] ].
-	nonlocal
-		ifTrue: [ tabs := tabs - 1.
-			stream
-				crtab: tabs;
-				nextPutAll: '} catch(e) { if (e[0] == _home) return e[1]; else throw(e); }' ].
+	(statements isEmpty orNot: [ statements last isReturn ]) ifTrue: [
+		statements isEmpty ifFalse: [ stream crtab: tabs ].
+		stream			nextPutAll: 'return this;' ].
+	nonlocal ifTrue: [ 
+		tabs := tabs - 1.
+		stream
+			crtab: tabs;
+			nextPutAll:
+				'} catch(e) { if (e[0] == _home) return e[1]; else throw(e); }' ].
 	stream
 		crtab: 1;
 		nextPutAll: '}';

@@ -86,7 +86,7 @@ JSTranspiler >> transpileClassMethods: methods [
 		sort: [ :a :b | a selector < b selector ];
 		reject: [ :m | m selector beginsWith: #print ]
 			thenCollect: [ :m | 
-			JSMethodTranspiler new
+			DirectJSCodeEmitter new
 				method: m;
 				transpileClassMethod ]
 ]
@@ -98,7 +98,7 @@ JSTranspiler >> transpileMethods: methods [
 		sort: [ :a :b | a selector < b selector ];
 		reject: [ :m | m selector beginsWith: #print ]
 			thenCollect: [ :m | 
-			JSMethodTranspiler new
+			DirectJSCodeEmitter new
 				method: m;
 				transpile ].
 	transpilers := transpilers , t
@@ -148,7 +148,7 @@ JSTranspiler >> writeClassConstructor: aClass into: ws [
 				nextPutAll: 'super();' ].
 	ivars
 		do: [ :name | 
-			translated := JSMethodTranspiler translateIdentifier: name.
+			translated := DirectJSCodeEmitter translateIdentifier: name.
 			ws
 				crtab: 2;
 				nextPutAll: 'this._';
@@ -187,7 +187,7 @@ JSTranspiler >> writeClassVariables: aClass into: ws [
 		ifTrue: [ ^ self ].
 	cvars
 		do: [ :name | 
-			translated := JSMethodTranspiler translateIdentifier: name.
+			translated := DirectJSCodeEmitter translateIdentifier: name.
 			ws
 				crtab;
 				nextPutAll: 'static _';

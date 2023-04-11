@@ -1,17 +1,17 @@
 Class {
-	#name : #JSMethodTranspilerTest,
+	#name : #DirectJSCodeEmitterTest,
 	#superclass : #TestCase,
 	#category : #'PowerlangJS-Tests'
 }
 
 { #category : #tests }
-JSMethodTranspilerTest >> compile: aString [
+DirectJSCodeEmitterTest >> compile: aString [
 	^ self compile: aString in: UndefinedObject 
 
 ]
 
 { #category : #tests }
-JSMethodTranspilerTest >> compile: methodSource in: aBehavior [
+DirectJSCodeEmitterTest >> compile: methodSource in: aBehavior [
 	| compiler method |
 	compiler := OpalCompiler new.
 	compiler
@@ -28,7 +28,7 @@ JSMethodTranspilerTest >> compile: methodSource in: aBehavior [
 ]
 
 { #category : #tests }
-JSMethodTranspilerTest >> compileAndTranspile: aString [
+DirectJSCodeEmitterTest >> compileAndTranspile: aString [
 
 	| method |
 	method := self compile: aString.
@@ -36,7 +36,7 @@ JSMethodTranspilerTest >> compileAndTranspile: aString [
 ]
 
 { #category : #tests }
-JSMethodTranspilerTest >> test010emptyMethod [
+DirectJSCodeEmitterTest >> test010emptyMethod [
 	| code |
 	code := self compileAndTranspile: 'foo'.
 	self assert: code equals: '	foo() {
@@ -47,7 +47,7 @@ JSMethodTranspilerTest >> test010emptyMethod [
 ]
 
 { #category : #tests }
-JSMethodTranspilerTest >> test020returnSelf [
+DirectJSCodeEmitterTest >> test020returnSelf [
 	| code |
 	code := self compileAndTranspile: 'foo ^self'.
 	self assert: code equals: '	foo() {
@@ -58,8 +58,8 @@ JSMethodTranspilerTest >> test020returnSelf [
 ]
 
 { #category : #tests }
-JSMethodTranspilerTest >> transpile: method [
-	^ JSMethodTranspiler new
+DirectJSCodeEmitterTest >> transpile: method [
+	^ DirectJSCodeEmitter new
 		  method: method;
 		  transpile;
 		  result

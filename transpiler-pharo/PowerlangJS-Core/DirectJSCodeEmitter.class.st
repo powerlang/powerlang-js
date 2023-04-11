@@ -1,39 +1,11 @@
 Class {
-	#name : #JSMethodTranspiler,
-	#superclass : #Object,
-	#instVars : [
-		'stream',
-		'method',
-		'tabs',
-		'currentBlock',
-		'imports',
-		'classMethod'
-	],
+	#name : #DirectJSCodeEmitter,
+	#superclass : #AbstractJSFunctionEmitter,
 	#category : #'PowerlangJS-Core'
 }
 
 { #category : #visiting }
-JSMethodTranspiler class >> translateIdentifier: aString [
-	aString = 'arguments'
-		ifTrue: [ ^ '_arguments' ].
-	aString = 'class'
-		ifTrue: [ ^ '_class' ].
-	aString = 'Dictionary'
-		ifTrue: [ ^ 'Map' ].
-	aString = 'IdentityDictionary'
-		ifTrue: [ ^ 'Map' ].
-		
-	aString = 'OrderedCollection'
-		ifTrue: [ ^ 'Array' ].
-	aString = 'ByteArray'
-		ifTrue: [ ^ 'Array' ].
-	aString = 'BlockClosure'
-		ifTrue: [ ^ 'Function' ].
-	^ aString
-]
-
-{ #category : #visiting }
-JSMethodTranspiler >> basicVisitMessageNode: anRBMessageNode [
+DirectJSCodeEmitter >> basicVisitMessageNode: anRBMessageNode [
 	| recv parentheses selector signature |
 	
 	recv := anRBMessageNode receiver.
@@ -56,12 +28,12 @@ JSMethodTranspiler >> basicVisitMessageNode: anRBMessageNode [
 ]
 
 { #category : #visiting }
-JSMethodTranspiler >> imports [
+DirectJSCodeEmitter >> imports [
 	^ imports
 ]
 
 { #category : #initialization }
-JSMethodTranspiler >> initialize [
+DirectJSCodeEmitter >> initialize [
 	tabs := 2.
 	stream := '' writeStream.
 	imports := OrderedCollection new.
@@ -69,142 +41,56 @@ JSMethodTranspiler >> initialize [
 ]
 
 { #category : #visiting }
-JSMethodTranspiler >> isSpecialSelector: selector [
-	"	^ #(ifTrue: ifFalse: #ifTrue:ifFalse: whileTrue whileFalse whileTrue: whileFalse:)"
-
-	^ #(#bitsAt: + - * / & | << >> bitAnd: bitOr: ) includes: selector	" #(ifTrue: ifFalse:) includes: selector"
-]
-
-{ #category : #accessing }
-JSMethodTranspiler >> method [
-	^ method
-]
-
-{ #category : #accessing }
-JSMethodTranspiler >> method: aCompiledMethod [ 
-	method := aCompiledMethod 
-]
-
-{ #category : #visiting }
-JSMethodTranspiler >> methodHasNonLocal: anRBMethodNode [
+DirectJSCodeEmitter >> methodHasNonLocal: anRBMethodNode [
 	^anRBMethodNode blockNodes anySatisfy: [ :b | b returnCount > 0 ]
 ]
 
 { #category : #private }
-JSMethodTranspiler >> methodSignatureFrom: anRBMethodNode [
-	| selector translated |
-	selector := self transpileSelector: anRBMethodNode selector.
-	^ String
-		streamContents: [ :s | 
-			s
-				nextPutAll: selector;
-				nextPutAll: '('.
-			anRBMethodNode arguments
-				do: [ :arg | translated := self translateIdentifier: arg name. s nextPutAll: translated ]
-				separatedBy: [ s nextPutAll: ', ' ].
-			s nextPutAll: ')' ]
-]
-
-{ #category : #visiting }
-JSMethodTranspiler >> result [
-	^stream contents
+DirectJSCodeEmitter >> methodSignatureFrom: anRBMethodNode [
+	| args |
+	args := anRBMethodNode arguments collect: [:arg | arg name].
+	self methodSignature: anRBMethodNode selector arguments: args 
 ]
 
 { #category : #accessing }
-JSMethodTranspiler >> stream [
+DirectJSCodeEmitter >> stream [
 	^ stream
 ]
 
 { #category : #accessing }
-JSMethodTranspiler >> stream: aWriteStream [
+DirectJSCodeEmitter >> stream: aWriteStream [
 	stream := aWriteStream
 ]
 
 { #category : #accessing }
-JSMethodTranspiler >> translateIdentifier: aString [
-	^self class translateIdentifier: aString
-]
-
-{ #category : #accessing }
-JSMethodTranspiler >> transpile [
+DirectJSCodeEmitter >> transpile [
 	method ast
 		acceptVisitor: self
 ]
 
-{ #category : #private }
-JSMethodTranspiler >> transpileBinarySelector: selector [
-	selector = #/
-		ifTrue: [ ^ #_slash ].
-	selector = #, ifTrue: [ ^#_comma ].
-	selector = #!= ifTrue: [ ^#_notEqual ].
-	selector = #= ifTrue: [ ^#_equal ].
-	selector = #== ifTrue: [ ^#_equalEqual ].
-	selector = #+ ifTrue: [ ^#_plus ].
-	selector = #- ifTrue: [ ^#_minus ].
-	selector = #* ifTrue: [ ^#_times ].
-	selector = #// 	ifTrue: [ ^ #_integerQuotient ].
-	selector = #< ifTrue: [ ^#_lessThan ].
-	selector = #<= ifTrue: [ ^#_lessEqualThan ].
-	selector = #> ifTrue: [ ^#_greaterThan ].
-	selector = #>= ifTrue: [ ^#_greaterEqualThan ].
-	selector = #| ifTrue: [ ^#_or ].
-	selector = #-> ifTrue: [ ^#_arrow ].
-	selector = #<< ifTrue: [ ^#_shiftLeft ].
-	selector = #>> ifTrue: [ ^#_shiftRight ].
-	selector = #\\ ifTrue: [ ^#_modulo ].
-
-
-	self ASSERT: false
-]
-
-{ #category : #accessing }
-JSMethodTranspiler >> transpileClassMethod [
-	classMethod := true.
-	self transpile
-]
-
-{ #category : #private }
-JSMethodTranspiler >> transpileSelector: selector [
-	| first part |
-	selector isBinary
-		ifTrue: [ ^ self transpileBinarySelector: selector ].
-	selector isKeyword
-		ifFalse: [ ^ selector ].
-	^ String
-		streamContents: [ :s | 
-			first := true.
-			(selector findTokens: $:)
-				do: [ :token | 
-					part := first
-						ifTrue: [ token ]
-						ifFalse: [ token capitalized ].
-					s nextPutAll: part.
-					first := false ]. (selector last == $:) ifTrue: [s nextPut: $_]]
-]
-
 { #category : #visiting }
-JSMethodTranspiler >> visitArgumentNode: anRBArgumentNode [
+DirectJSCodeEmitter >> visitArgumentNode: anRBArgumentNode [
 	| translated |
 	translated := self translateIdentifier: anRBArgumentNode name.
 	stream nextPutAll: translated
 ]
 
 { #category : #visiting }
-JSMethodTranspiler >> visitArrayNode: aRBArrayNode [ 
+DirectJSCodeEmitter >> visitArrayNode: aRBArrayNode [ 
 	stream nextPut: $[.
 	aRBArrayNode statements do: [:s | s acceptVisitor: self] separatedBy: [ stream nextPutAll: ', ' ].
 	stream nextPut: $]
 ]
 
 { #category : #visiting }
-JSMethodTranspiler >> visitAssignmentNode: anRBAssignmentNode [ 
+DirectJSCodeEmitter >> visitAssignmentNode: anRBAssignmentNode [ 
 	anRBAssignmentNode variable acceptVisitor: self.
 	stream nextPutAll: ' = '.
 	anRBAssignmentNode value acceptVisitor: self
 ]
 
 { #category : #visiting }
-JSMethodTranspiler >> visitBitsAt: message [
+DirectJSCodeEmitter >> visitBitsAt: message [
 	| argument stretch offset |
 	argument := message arguments first.
 	self ASSERT: argument isGlobal.
@@ -223,7 +109,7 @@ JSMethodTranspiler >> visitBitsAt: message [
 ]
 
 { #category : #visiting }
-JSMethodTranspiler >> visitBlockNode: anRBBlockNode [
+DirectJSCodeEmitter >> visitBlockNode: anRBBlockNode [
 	| prev translated |
 	prev := currentBlock.
 	currentBlock := anRBBlockNode.
@@ -246,7 +132,7 @@ JSMethodTranspiler >> visitBlockNode: anRBBlockNode [
 ]
 
 { #category : #visiting }
-JSMethodTranspiler >> visitBlockStatements: statements inline: aBoolean [
+DirectJSCodeEmitter >> visitBlockStatements: statements inline: aBoolean [
 	| last separator |
 	statements isEmpty
 		ifTrue: [ aBoolean
@@ -266,7 +152,7 @@ JSMethodTranspiler >> visitBlockStatements: statements inline: aBoolean [
 ]
 
 { #category : #visiting }
-JSMethodTranspiler >> visitCascadeMessageNode: anRBMessageNode [
+DirectJSCodeEmitter >> visitCascadeMessageNode: anRBMessageNode [
 	| signature |
 	signature := self transpileSelector: anRBMessageNode selector.
 	stream
@@ -281,7 +167,7 @@ JSMethodTranspiler >> visitCascadeMessageNode: anRBMessageNode [
 ]
 
 { #category : #visiting }
-JSMethodTranspiler >> visitCascadeNode: anRBCascadeNode [
+DirectJSCodeEmitter >> visitCascadeNode: anRBCascadeNode [
 	| receiver messages |
 	messages := anRBCascadeNode messages.
 	receiver := messages first receiver.
@@ -305,7 +191,7 @@ JSMethodTranspiler >> visitCascadeNode: anRBCascadeNode [
 ]
 
 { #category : #visiting }
-JSMethodTranspiler >> visitGlobalNode: anRBGlobalNode [
+DirectJSCodeEmitter >> visitGlobalNode: anRBGlobalNode [
 	| translated binding |
 	translated := self translateIdentifier: anRBGlobalNode name.
 	binding := anRBGlobalNode binding .
@@ -319,7 +205,7 @@ JSMethodTranspiler >> visitGlobalNode: anRBGlobalNode [
 ]
 
 { #category : #visiting }
-JSMethodTranspiler >> visitIf: message true: aBoolean [
+DirectJSCodeEmitter >> visitIf: message true: aBoolean [
 	
 	| block statements |
 	block := message arguments first.
@@ -338,7 +224,7 @@ JSMethodTranspiler >> visitIf: message true: aBoolean [
 ]
 
 { #category : #visiting }
-JSMethodTranspiler >> visitInstanceVariableNode: anRBInstanceVariableNode [
+DirectJSCodeEmitter >> visitInstanceVariableNode: anRBInstanceVariableNode [
 	| translated |
 	translated := self translateIdentifier: anRBInstanceVariableNode name.
 	stream
@@ -347,14 +233,14 @@ JSMethodTranspiler >> visitInstanceVariableNode: anRBInstanceVariableNode [
 ]
 
 { #category : #visiting }
-JSMethodTranspiler >> visitLiteralArrayNode: anRBLiteralArrayNode [ 
+DirectJSCodeEmitter >> visitLiteralArrayNode: anRBLiteralArrayNode [ 
 	stream nextPut: $[.
 	anRBLiteralArrayNode contents do: [:elem | elem acceptVisitor: self] separatedBy: [stream nextPutAll: ', '].
 	stream nextPut: $]
 ]
 
 { #category : #visiting }
-JSMethodTranspiler >> visitLiteralValueNode: anRBLiteralValueNode [
+DirectJSCodeEmitter >> visitLiteralValueNode: anRBLiteralValueNode [
  	| v |
 	v := anRBLiteralValueNode value.
 	v ifNil: [ ^stream nextPutAll: 'nil' ].
@@ -363,7 +249,7 @@ JSMethodTranspiler >> visitLiteralValueNode: anRBLiteralValueNode [
 ]
 
 { #category : #visiting }
-JSMethodTranspiler >> visitMessageNode: anRBMessageNode [
+DirectJSCodeEmitter >> visitMessageNode: anRBMessageNode [
 
 	| selector |
 	selector := anRBMessageNode selector.
@@ -373,7 +259,7 @@ JSMethodTranspiler >> visitMessageNode: anRBMessageNode [
 ]
 
 { #category : #visiting }
-JSMethodTranspiler >> visitMethodNode: anRBMethodNode [
+DirectJSCodeEmitter >> visitMethodNode: anRBMethodNode [
 	| signature nonlocal temps statements |
 	signature := self methodSignatureFrom: anRBMethodNode.
 	stream tab: 1.
@@ -422,7 +308,7 @@ JSMethodTranspiler >> visitMethodNode: anRBMethodNode [
 ]
 
 { #category : #visiting }
-JSMethodTranspiler >> visitReturnNode: anRBReturnNode [
+DirectJSCodeEmitter >> visitReturnNode: anRBReturnNode [
 	currentBlock
 		ifNil: [ stream nextPutAll: 'return '.
 			anRBReturnNode value acceptVisitor: self ]
@@ -432,17 +318,17 @@ JSMethodTranspiler >> visitReturnNode: anRBReturnNode [
 ]
 
 { #category : #visiting }
-JSMethodTranspiler >> visitSelfNode: aRBSelfNode [
+DirectJSCodeEmitter >> visitSelfNode: aRBSelfNode [
 	stream nextPutAll: 'this'
 ]
 
 { #category : #visiting }
-JSMethodTranspiler >> visitSpecialIntegerBinaryMessage: message [
+DirectJSCodeEmitter >> visitSpecialIntegerBinaryMessage: message [
 self visitSpecialIntegerBinaryMessage: message selector: message selector
 ]
 
 { #category : #visiting }
-JSMethodTranspiler >> visitSpecialIntegerBinaryMessage: message selector: operand [
+DirectJSCodeEmitter >> visitSpecialIntegerBinaryMessage: message selector: operand [
 	stream nextPutAll: '('.
 	message receiver acceptVisitor: self.
 	stream nextPutAll: operand.
@@ -451,7 +337,7 @@ JSMethodTranspiler >> visitSpecialIntegerBinaryMessage: message selector: operan
 ]
 
 { #category : #visiting }
-JSMethodTranspiler >> visitSpecialMessage: message [
+DirectJSCodeEmitter >> visitSpecialMessage: message [
 	| selector |
 	selector := message selector.
 	selector == #+ ifTrue: [ ^self visitSpecialIntegerBinaryMessage: message].
@@ -481,13 +367,13 @@ JSMethodTranspiler >> visitSpecialMessage: message [
 ]
 
 { #category : #visiting }
-JSMethodTranspiler >> visitSuperNode: anRBSuperNode [ 
+DirectJSCodeEmitter >> visitSuperNode: anRBSuperNode [ 
 	stream nextPutAll: 'super'
 
 ]
 
 { #category : #visiting }
-JSMethodTranspiler >> visitTemporaryNode: anRBTemporaryNode [
+DirectJSCodeEmitter >> visitTemporaryNode: anRBTemporaryNode [
 	| translated |
 	translated := self translateIdentifier: anRBTemporaryNode name.
 

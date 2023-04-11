@@ -5,7 +5,7 @@ Class {
 		'runtime',
 		'bootstrapper'
 	],
-	#category : #'PowerlangJS-Tests'
+	#category : #'PowerlangJS-TestsFailing'
 }
 
 { #category : #accessing }

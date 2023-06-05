@@ -11,7 +11,7 @@ Until we have a CI set in place, you have to clone this repo and build the whole
   
 
     # fetch the code, generate interpreter and image, fetch js dependencies
-    git clone git@github.com:melkyades/powerlang-js.git
+    git clone git@github.com:powerlang/powerlang-js.git
     cd powerlang-js
     make all
     npm install

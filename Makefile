@@ -16,14 +16,14 @@ powerlang/specs/current: powerlang
 powerlang:
 	git clone git@github.com:powerlang/powerlang.git
 
-kernel: image-segments/kernel.json powerlang/specs/current
+kernel: image-segments/Kernel.json
 
 interpreter/PowertalkEvaluator.js: powerlang/powerlangjs.image
 	cd powerlang && ./pharo powerlangjs.image eval "JSTranspiler transpilePowerlangInterpreter"
 
 interpreter: interpreter/PowertalkEvaluator.js
 
-image-segments/kernel.json: powerlang/powerlangjs.image
+$(IMAGE_SEGMENTS_DIR)/Kernel.json: powerlang/powerlangjs.image powerlang/specs/current
 	export IMAGE_SEGMENTS_DIR
 	cd powerlang && ./pharo powerlangjs.image eval "JSTranspiler generateKernelSegment"
 

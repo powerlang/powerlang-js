@@ -16,7 +16,7 @@ powerlang/specs/current: powerlang
 powerlang:
 	git clone git@github.com:powerlang/powerlang.git
 
-kernel: image-segments/Kernel.json
+kernel: $(IMAGE_SEGMENTS_DIR)/Kernel.json
 
 interpreter/PowertalkEvaluator.js: powerlang/powerlangjs.image
 	cd powerlang && ./pharo powerlangjs.image eval "JSTranspiler transpilePowerlangInterpreter"

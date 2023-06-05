@@ -1,3 +1,6 @@
+ROOT_DIR:=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
+IMAGE_SEGMENTS_DIR=$(ROOT_DIR)/image-segments
+
 .PHONY: all interpreter kernel
 
 all: interpreter kernel
@@ -16,12 +19,13 @@ powerlang:
 kernel: image-segments/kernel.json powerlang/specs/current
 
 interpreter/PowertalkEvaluator.js: powerlang/powerlangjs.image
-	cd powerlang && ./pharo powerlang.image eval "JSTranspiler transpilePowerlangInterpreter"
+	cd powerlang && ./pharo powerlangjs.image eval "JSTranspiler transpilePowerlangInterpreter"
 
 interpreter: interpreter/PowertalkEvaluator.js
 
 image-segments/kernel.json: powerlang/powerlangjs.image
-	KERNEL_FILE=$@ cd powerlang && ./pharo powerlang.image eval "JSTranspiler generateKernelSegment"
+	export IMAGE_SEGMENTS_DIR
+	cd powerlang && ./pharo powerlangjs.image eval "JSTranspiler generateKernelSegment"
 
 
 

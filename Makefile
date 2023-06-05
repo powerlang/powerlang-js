@@ -2,23 +2,27 @@
 
 all: interpreter kernel
 
-powerlang/bootstrap.image: powerlang
+powerlang/powerlangjs.image: powerlang
 	make -C powerlang bootstrap.image
+	cd powerlang && ./pharo bootstrap.image save powerlangjs
+	cd powerlang && ./pharo powerlangjs.image eval --save "Metacello new repository: 'github://powerlang/powerlang-js'; baseline: 'PowerlangJS'; load: 'base'"
 
 powerlang/specs/current: powerlang
 	make -C powerlang specs/current
 
-
 powerlang:
 	git clone git@github.com:powerlang/powerlang.git
 
-kernel: image-segments/kernel.json
+kernel: image-segments/kernel.json powerlang/specs/current
 
-interpreter/PowertalkEvaluator.js: powerlang/bootstrap.image powerlang/specs/current
-	make -C powerlang powerlangjs
+interpreter/PowertalkEvaluator.js: powerlang/powerlangjs.image
+	cd powerlang && ./pharo powerlang.image eval "JSTranspiler transpilePowerlangInterpreter"
 
 interpreter: interpreter/PowertalkEvaluator.js
 
-image-segments/kernel.json: powerlang/bootstrap.image
-	KERNEL_FILE=$@ make -C powerlang powerlangjs-kernel
+image-segments/kernel.json: powerlang/powerlangjs.image
+	KERNEL_FILE=$@ cd powerlang && ./pharo powerlang.image eval "JSTranspiler generateKernelSegment"
+
+
+
 

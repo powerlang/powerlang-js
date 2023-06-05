@@ -8,6 +8,47 @@ Class {
 }
 
 { #category : #'as yet unclassified' }
+JSTranspiler class >> generateKernelSegment [
+
+	| image bootstrapper runtime output module json ws |
+	image := PowertalkRingImage fromSpec
+		         wordSize: 8;
+		         genesis;
+		         bootstrap;
+		         fillClasses;
+		         fillSymbols.
+	bootstrapper := image generateLMR.
+	runtime := bootstrapper result.
+	output := self imageSegmentDirectory / 'Kernel.json'.
+	output ensureCreateFile.
+	module := bootstrapper loadBootstrapModule.
+	json := runtime sendLocal: #writeJSONKernel to: module.
+	output writeStreamDo: [ :stream | 
+		stream truncate.
+		ws := ZnNewLineWriterStream on: stream.
+		ws nextPutAll: json asLocalString ]
+]
+
+{ #category : #'as yet unclassified' }
+JSTranspiler class >> imageSegmentDirectory [
+
+	| dir |
+	dir := Smalltalk os environment
+		        at: 'IMAGE_SEGMENT_DIRECTORY'
+		        ifAbsent: [self rootDirectory / 'image-segments'].
+	^ dir asFileReference
+]
+
+{ #category : #'as yet unclassified' }
+JSTranspiler class >> interpreterDirectory [
+	"
+		self new outputDirectory path pathString
+	"
+
+	^ self rootDirectory / 'interpreter'
+]
+
+{ #category : #'as yet unclassified' }
 JSTranspiler class >> powerlangInterpreterClasses [
 	^ LMRObject withAllSubclasses
 		,
@@ -36,6 +77,13 @@ JSTranspiler class >> powerlangInterpreterClasses [
 ]
 
 { #category : #'as yet unclassified' }
+JSTranspiler class >> rootDirectory [
+	| root |
+	root := Smalltalk os environment at: 'POWERLANG_JS_ROOT' ifAbsent: '..'.
+	^ root asFileReference
+]
+
+{ #category : #'as yet unclassified' }
 JSTranspiler class >> transpilePowerlangInterpreter [
 	| transpiler |
 	transpiler := self new.
@@ -54,25 +102,17 @@ JSTranspiler >> classImports: aClass [
 	^ result
 ]
 
-{ #category : #'as yet unclassified' }
-JSTranspiler >> outputDirectory [
-	"
-		self new outputDirectory path pathString
-	"
+{ #category : #transpiling }
+JSTranspiler >> interpreterDirectory [
 
-	^ self rootDirectory / 'LMRjs' / 'interpreter'
-]
-
-{ #category : #'as yet unclassified' }
-JSTranspiler >> rootDirectory [
-	^ './specs/bee-dmr' asFileReference
+	^ self class interpreterDirectory
 ]
 
 { #category : #transpiling }
 JSTranspiler >> transpileClass: aClass [
 	| filename ws |
 	self transpileClassMethods: aClass class methods; transpileMethods: aClass methods.
-	filename := self outputDirectory / (aClass name , '.js').
+	filename := self interpreterDirectory / (aClass name , '.js').
 	filename ensureCreateFile;
 		writeStreamDo: [ :s | 
 			s truncate.

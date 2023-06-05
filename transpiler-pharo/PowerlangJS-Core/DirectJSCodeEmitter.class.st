@@ -49,7 +49,7 @@ DirectJSCodeEmitter >> methodHasNonLocal: anRBMethodNode [
 DirectJSCodeEmitter >> methodSignatureFrom: anRBMethodNode [
 	| args |
 	args := anRBMethodNode arguments collect: [:arg | arg name].
-	self methodSignature: anRBMethodNode selector arguments: args 
+	^self methodSignature: anRBMethodNode selector arguments: args 
 ]
 
 { #category : #accessing }
@@ -69,7 +69,7 @@ DirectJSCodeEmitter >> transpile [
 ]
 
 { #category : #visiting }
-DirectJSCodeEmitter >> visitArgumentNode: anRBArgumentNode [
+DirectJSCodeEmitter >> visitArgumentVariableNode: anRBArgumentNode [
 	| translated |
 	translated := self translateIdentifier: anRBArgumentNode name.
 	stream nextPutAll: translated
@@ -91,20 +91,22 @@ DirectJSCodeEmitter >> visitAssignmentNode: anRBAssignmentNode [
 
 { #category : #visiting }
 DirectJSCodeEmitter >> visitBitsAt: message [
+
 	| argument stretch offset |
 	argument := message arguments first.
-	self ASSERT: argument isGlobal.
+	self ASSERT: argument isLiteralVariable.
 	stretch := argument binding value.
 	self ASSERT: stretch class == Stretch.
-	stream nextPutAll: '(('. message receiver acceptVisitor: self.
+	stream nextPutAll: '(('.
+	message receiver acceptVisitor: self.
 	offset := stretch start - 1.
-	offset > 0
-		ifTrue: [ stream
-				nextPutAll: ' >> ';
-				print: offset ].
+	offset > 0 ifTrue: [ 
+		stream
+			nextPutAll: ' >> ';
+			print: offset ].
 	stream
 		nextPutAll: ') & 0x';
-		nextPutAll: ((1 << stretch length) - 1) printStringHex;
+		nextPutAll: (1 << stretch length - 1) printStringHex;
 		nextPutAll: ')'
 ]
 
@@ -191,16 +193,23 @@ DirectJSCodeEmitter >> visitCascadeNode: anRBCascadeNode [
 ]
 
 { #category : #visiting }
-DirectJSCodeEmitter >> visitGlobalNode: anRBGlobalNode [
+DirectJSCodeEmitter >> visitClassVariableNode: anRBVariableNode [
+	| translated binding |
+	translated := self translateIdentifier: anRBVariableNode name.
+	binding := anRBVariableNode binding .
+	binding isPoolVariable 
+		ifFalse: [classMethod
+			ifTrue: [ stream nextPutAll: 'this._' ]
+			ifFalse: [ stream nextPutAll: 'this.constructor._' ]].
+	stream nextPutAll: translated
+]
+
+{ #category : #visiting }
+DirectJSCodeEmitter >> visitGlobalVariableNode: anRBGlobalNode [
 	| translated binding |
 	translated := self translateIdentifier: anRBGlobalNode name.
 	binding := anRBGlobalNode binding .
-	binding
-	 isClassVariable
-		ifTrue: [ binding isFromSharedPool ifFalse: [classMethod
-				ifTrue: [ stream nextPutAll: 'this._' ]
-				ifFalse: [ stream nextPutAll: 'this.constructor._' ]] ]
-		ifFalse: [ imports add: translated ].
+	imports add: translated.
 	stream nextPutAll: translated
 ]
 
@@ -373,7 +382,7 @@ DirectJSCodeEmitter >> visitSuperNode: anRBSuperNode [
 ]
 
 { #category : #visiting }
-DirectJSCodeEmitter >> visitTemporaryNode: anRBTemporaryNode [
+DirectJSCodeEmitter >> visitTemporaryVariableNode: anRBTemporaryNode [
 	| translated |
 	translated := self translateIdentifier: anRBTemporaryNode name.
 

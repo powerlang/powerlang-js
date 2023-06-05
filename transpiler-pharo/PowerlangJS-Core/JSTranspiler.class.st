@@ -73,7 +73,7 @@ JSTranspiler >> transpileClass: aClass [
 	| filename ws |
 	self transpileClassMethods: aClass class methods; transpileMethods: aClass methods.
 	filename := self outputDirectory / (aClass name , '.js').
-	filename
+	filename ensureCreateFile;
 		writeStreamDo: [ :s | 
 			s truncate.
 			ws := ZnNewLineWriterStream on: s.

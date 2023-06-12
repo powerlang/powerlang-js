@@ -14,7 +14,7 @@ let Bootstrapper = class {
 		this.runtime = PowertalkLMR.new();
 	}
 
-	loadKernelFile(kernelPath = 'Kernel.json')
+	loadKernelFile(kernelPath = 'image-segments/Kernel.json')
 	{
 		const module = this.loadModuleFromFile(kernelPath);
 		this.initializeKernel(module);

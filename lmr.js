@@ -24,14 +24,14 @@ globalThis.nil = {}
 Object.prototype.ifNil_ = function(closure) { if (this == nil) { return closure() } else { return this } }
 
 Object.prototype.ifNotNil_ = function(closure) { if (this == nil) { return nil } else {return closure(this)} }
-Object.prototype.ifNilIfNotNil_ = function(closureNil, closureNotNil) {
+Object.prototype.ifNil_ifNotNil_ = function(closureNil, closureNotNil) {
 	if (this == nil) { return closureNil() } else {return closureNotNil(this) } }
 
 
 Object.prototype.isNil = function() { return (this === nil) }
 Object.prototype.notNil = function() { return (!this.isNil()) }
 
-Object.prototype.value = function () { return this; }
+//Object.prototype.value = function () { return this; }
 
 Object.prototype.eval_ = function(string) {
 	 return eval(string) }
@@ -41,6 +41,9 @@ Object.prototype.isSmallInteger = function(value) { return Number.isInteger(valu
 Object.prototype.isCollection = function() { return false; }
 Array.prototype.isCollection  = function() { return true; }
 Map.prototype.isCollection    = function() { return true; }
+
+Object.prototype.isBlock    = function() { return false; }
+Function.prototype.isBlock  = function() { return true; }
 
 Object.prototype.initialize = function() { return this;}
 Object.prototype.basicNew = function() { return new this; }
@@ -52,7 +55,7 @@ Object.prototype.class = function() { return this.constructor; }
 
 Boolean.prototype.ifTrue_  = function(closure) { if (this == true) { return closure() } else {return nil } }
 Boolean.prototype.ifFalse_ = function(closure) { if (this == true) { return nil } else { return closure() } }
-Boolean.prototype.ifTrueIfFalse_ = function(closureTrue, closureFalse) { if (this == true) { return closureTrue() } else {return closureFalse() } }
+Boolean.prototype.ifTrue_ifFalse_ = function(closureTrue, closureFalse) { if (this == true) { return closureTrue() } else {return closureFalse() } }
 
 Boolean.prototype.or_  = function (closure) { return this || closure() }
 Boolean.prototype.orNot_  = function (closure) { return this || !closure() }
@@ -61,13 +64,13 @@ Boolean.prototype.andNot_ = function (closure) { return this && !closure() }
 Boolean.prototype.not = function () { return !this }
 
 Array.new_ = function(size) { return new Array(size); }
-Array.newWithAll_ = function(size, value) { return Array(size).fill(value); }
-Array.withWith_ = function(first, second) { return [first, second]; }
+Array.new_withAll_ = function(size, value) { return Array(size).fill(value); }
+Array.with_with_ = function(first, second) { return [first, second]; }
 Array.prototype.size  = function()         { return this.length; }
 Array.prototype.isEmpty  = function()         { return this.length == 0; }
 Array.prototype.asArray  = function()         { return this; }
 Array.prototype.at_    = function(index)         { return this[index-1]; }
-Array.prototype.atPut_ = function(index, object) { return this[index-1] = object; }
+Array.prototype.at_put_ = function(index, object) { return this[index-1] = object; }
 Array.prototype.atAllPut_ = function(value) { return this.fill(value); }
 Array.prototype.allButLast = function() { return this.slice(0,-1); }
 Array.prototype.first    = function()         { return this[0]; }
@@ -100,6 +103,7 @@ Array.prototype._equal = function(value) {
 }
 
 String.prototype.asByteArray = function() { return Array.from(this).map((char) => char.charCodeAt(0)); }
+String.prototype.beginsWith_ = function(string) { return this.startsWith(string); }
 
 Map.withAll_ = function(associations) {
 	const result = new this;
@@ -108,15 +112,15 @@ Map.withAll_ = function(associations) {
 }
 
 Map.prototype.at_          = function(key)         { return this.get(key); }
-Map.prototype.atPut_       = function(key, value) { return this.set(key, value); }
-Map.prototype.atIfPresent_ = function(key, closure) {
+Map.prototype.at_put_       = function(key, value) { return this.set(key, value); }
+Map.prototype.at_ifPresent_ = function(key, closure) {
 	if (this.has(key))
 		return closure(this.get(key));
 	else
 		return nil;
 }
 
-Map.prototype.atIfAbsentPut_ = function(key, closure) {
+Map.prototype.at_ifAbsentPut_ = function(key, closure) {
 	let v = this.get(key);
 	if (v)
 		return v;
@@ -126,7 +130,7 @@ Map.prototype.atIfAbsentPut_ = function(key, closure) {
 	return v;
 }
 
-Map.prototype.removeKeyIfAbsent_ = function(key, closure) {
+Map.prototype.removeKey_ifAbsent_ = function(key, closure) {
 	if (!this.delete(key)) { closure();}
 }
 
@@ -144,11 +148,11 @@ Function.prototype.value_ = function (a) {
 	return this(a);
 }
 
-Function.prototype.valueValue_ = function (a, b) {
+Function.prototype.value_value_ = function (a, b) {
 	return this(a, b);
 }
 
-Function.prototype.valueValueValue_ = function (a, b, c) {
+Function.prototype.value_value_value_ = function (a, b, c) {
 	return this(a, b, c);
 }
 
@@ -209,14 +213,13 @@ Number.prototype.anyMask_ = function(value) { return (this & value) != 0; }
 Number.prototype.noMask_ = function(value) { return (this & value) == 0; }
 
 Number.prototype.timesRepeat_ = function(closure) { for (let i = 0; i < this; i++) { closure(); } }
-Number.prototype.toDo_ = function(limit, closure) { for (let i = this; i <= limit; i++) { closure(i); } }
-Number.prototype.toByDo_ = function(limit, increment, closure) { 
+Number.prototype.to_do_ = function(limit, closure) { for (let i = this; i <= limit; i++) { closure(i); } }
+Number.prototype.to_by_do_ = function(limit, increment, closure) { 
 	if (increment > 0) 
 		for (let i = this; i <= limit; i=i+increment) { closure(i); }
 	else
 		for (let i = this; i >= limit; i=i+increment) { closure(i); }
 }
-
 
 import LMRByteObject from "./interpreter/LMRByteObject.js";
 import LMRSlotObject from "./interpreter/LMRSlotObject.js";
@@ -243,7 +246,7 @@ Number.prototype.bitsAt_ = function(stretch) {
 	return shifted & (mask - 1)
 }
 
-Number.prototype.bitsAtPut_ = function(stretch, value) {
+Number.prototype.bitsAt_put_ = function(stretch, value) {
 	let shifted = this >> (stretch.start - 1);
 	let max = 1 << stretch.length();
 	if (value >= max)
@@ -301,7 +304,7 @@ let Interval = class {
 }
 
 Number.prototype.to_ = function(value) { return new Interval(this, value); }
-Number.prototype.toBy_ = function(limit, increment) { return new Interval(this, limit, increment); }
+Number.prototype.to_by_ = function(limit, increment) { return new Interval(this, limit, increment); }
 
 // ~~~~~~~~~~~~~~~~~~~~ ReadStream ~~~~~~~~~~~~~~~~~~~~~~~~
 

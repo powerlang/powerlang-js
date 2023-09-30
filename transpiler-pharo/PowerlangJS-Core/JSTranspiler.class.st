@@ -65,6 +65,7 @@ JSTranspiler class >> powerlangInterpreterClasses [
 			SCompiledMethodFlags.
 			ClosureElementTypes.
 			PowertalkEvaluator.
+			PowertalkEvaluatorError.
 			PowertalkIterativeInterpreter.
 			PowertalkIterativeStackedInterpreter} , SBinding withAllSubclasses
 		, SExpression withAllSubclasses

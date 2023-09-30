@@ -1,6 +1,12 @@
 Extension { #name : #RBProgramNode }
 
 { #category : #'*PowerlangJS-Core' }
+RBProgramNode >> isBranchNode [
+
+	^ false
+]
+
+{ #category : #'*PowerlangJS-Core' }
 RBProgramNode >> returnCount [
 	| count |
 	count := 0.

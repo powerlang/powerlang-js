@@ -64,8 +64,9 @@ DirectJSCodeEmitter >> stream: aWriteStream [
 
 { #category : #accessing }
 DirectJSCodeEmitter >> transpile [
-	method ast
-		acceptVisitor: self
+	| ast |
+	ast := method ast acceptVisitor: BranchLoweringVisitor new.
+	ast acceptVisitor: self
 ]
 
 { #category : #visiting }
@@ -112,16 +113,13 @@ DirectJSCodeEmitter >> visitBitsAt: message [
 
 { #category : #visiting }
 DirectJSCodeEmitter >> visitBlockNode: anRBBlockNode [
-	| prev translated |
+	| prev args |
 	prev := currentBlock.
 	currentBlock := anRBBlockNode.
 	tabs := tabs + 1.
 	stream nextPutAll: '('.
-	anRBBlockNode arguments
-		do: [ :arg | 
-			translated := self translateIdentifier: arg name.
-			stream nextPutAll: translated ]
-		separatedBy: [ stream nextPutAll: ', ' ].
+	args := anRBBlockNode arguments collect: [ :arg | self translateIdentifier: arg name].
+	self writeNameList: args.
 	stream
 		nextPutAll: ') => {';
 		crtab: tabs.
@@ -205,12 +203,49 @@ DirectJSCodeEmitter >> visitClassVariableNode: anRBVariableNode [
 ]
 
 { #category : #visiting }
+DirectJSCodeEmitter >> visitElse: anRBElseNode [
+
+	self visitIf: anRBElseNode if.
+	stream
+		nextPutAll: 'else';
+		crtab: tabs;
+		nextPut: ${.
+	tabs := tabs + 1.
+	stream crtab: tabs.
+	self visitBlockStatements: anRBElseNode block statements inline: true.
+	tabs := tabs - 1.
+	stream
+		crtab: tabs;
+		nextPut: $};
+		crtab: tabs
+]
+
+{ #category : #visiting }
 DirectJSCodeEmitter >> visitGlobalVariableNode: anRBGlobalNode [
 	| translated binding |
 	translated := self translateIdentifier: anRBGlobalNode name.
 	binding := anRBGlobalNode binding .
 	imports add: translated.
 	stream nextPutAll: translated
+]
+
+{ #category : #visiting }
+DirectJSCodeEmitter >> visitIf: anRBIfNode [
+
+	stream nextPutAll: 'if ('.
+	anRBIfNode condition acceptVisitor: self.
+	stream
+		nextPut: $);
+		crtab: tabs;
+		nextPut: ${.
+	tabs := tabs + 1.
+	stream crtab: tabs.
+	self visitBlockStatements: anRBIfNode block statements inline: true.
+	tabs := tabs - 1.
+	stream
+		crtab: tabs;
+		nextPut: $};
+		crtab: tabs
 ]
 
 { #category : #visiting }
@@ -387,4 +422,13 @@ DirectJSCodeEmitter >> visitTemporaryVariableNode: anRBTemporaryNode [
 	translated := self translateIdentifier: anRBTemporaryNode name.
 
 	stream nextPutAll: translated
+]
+
+{ #category : #visiting }
+DirectJSCodeEmitter >> writeNameList: names [
+	names	do: [ :name | 
+			
+			stream nextPutAll: name ]
+		separatedBy: [ stream nextPutAll: ', ' ].
+
 ]

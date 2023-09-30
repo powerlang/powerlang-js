@@ -77,18 +77,26 @@ Array.prototype.first    = function()         { return this[0]; }
 Array.prototype.second   = function()         { return this[1]; }
 Array.prototype.last     = function()         { return this[this.length-1]; }
 Array.prototype.asString = function() { return String.fromCharCode.apply(null, this); }
+Array.prototype.replaceFrom_to_with_startingAt_ = function(start, end, other, first) { 
+	const size = end - start + 1;
+	this.splice(start - 1, size, ...other.slice(first - 1, first - 1 + size));
+	return this;
+}
+
 Array.prototype.do_ = function(closure) {
 	this.forEach(closure);
 }
 Array.prototype.withIndexDo_ = function(closure) {
 	this.forEach((element, index) => {closure(element, index + 1)} );
 }
-Array.prototype.doSeparatedBy_ = function(closure, separated) {
+Array.prototype.do_separatedBy_ = function(closure, separated) {
 	this.forEach((value, index) => { 
 		closure(value); 
 		if (!Object.is(this.length - 1, index)) {separated()}
 	});
 }
+
+Array.prototype.detect_ = function(block) { return this.find(block); }
 
 
 String.prototype.asSymbol = function() { return this; }
@@ -207,6 +215,8 @@ Number.prototype._and = function(value) { return this & value; }
 Number.prototype._or = function(value) { return this | value; }
 Number.prototype.bitAnd_ = function(value) { return this & value; }
 Number.prototype.bitOr_ = function(value) { return this | value; }
+Number.prototype.bitXor_ = function(value) { return this ^ value; }
+Number.prototype.bitShift_ = function(value) { return value > 0 ? this << value : this >> -value; }
 Number.prototype._shiftLeft = function(value) { return this << value; }
 Number.prototype._shiftRight = function(value) { return this >> value; }
 Number.prototype.anyMask_ = function(value) { return (this & value) != 0; }
@@ -361,11 +371,15 @@ let WriteStream = class {
 	constructor() { this.collection = ""; }
 	nextPut_(character) {this.collection = this.collection + character; return this;}
 	nextPutAll_(string) {this.collection = this.collection + string; return this;}
+	space() {return this.nextPutAll_(" ");}
 	cr() {return this.nextPutAll_("\n");}
 	crtab() {return this.nextPutAll_("\n\t");}
 	crtab_(n) {
 		this.nextPutAll_("\n" + "\t".repeat(n));
 	}
+	tab() {return this.nextPutAll_("\t");}
+
+	store_(anObject) { this.nextPutAll_(JSON.stringify(anObject)); return this; }
 	
 	contents() { return this.collection;}
 	reset() { this.collection = ""; return this;}
@@ -373,6 +387,7 @@ let WriteStream = class {
 }
 
 String.prototype.writeStream = function() { return new WriteStream(); }
+String.__proto__.streamContents_ = function(block) { let w = new WriteStream(); block(w); return w.contents(); }
 
 
 
@@ -397,6 +412,15 @@ LMRSlotObject.prototype.toString = function () {
 	
 		return klass.toString() + ">>" + selector.toString();
 	}
+
+	if (classname == "Behavior")
+	{
+		let klass = this.slotAt_(1);
+		return klass.toString() + ' behavior';
+	}
+		
+
+
 	const species = this.species();
 	if (!species.speciesIsClass()) // species is metaclass, then this is a class
 		return this.className().asLocalString();
